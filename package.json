@@ -1,0 +1,17 @@
+{
+  "name": "webservice",
+  "version": "1.0.0",
+  "description": "",
+  "main": "APIRoutes.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "dependencies": {
+    "dotenv": "^16.0.1",
+    "express": "^4.18.1",
+    "mongodb": "^4.8.0"
+  }
+}

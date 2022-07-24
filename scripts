@@ -1,0 +1,25 @@
+--- 200 planes
+firstN = { $sample: { size: 200} }
+addidone = { $group: { _id: null, planes : { $push : { currentLocation : "$position" }}}}
+unwind = { $unwind : {path: "$planes", includeArrayIndex: "id" }}
+format = {$project : { _id : {$concat : ["CARGO",{$toString:"$id"}]},
+currentLocation: "$planes.currentLocation", heading:{$literal:0}, route: []}}
+asplanes = { $out: "planes"}
+db.cities.aggregate([firstN,addidone,unwind,format,asplanes])
+
+//Fetch Top 15 cities by pop > 1000
+minsize = {$match:{population:{$gt:1000}, "city": {$not : { $type : "double" }}}}
+sortbysize = { $sort : { population: -1 }}
+percountry15 = { $group : { _id: "$country", cities: {$push: '$$ROOT'} }}
+percountry15Project = { $project : { _id: "$_id", cities_15: { $slice: ['$cities', 15] } }}
+unwind = { $unwind: { path: '$cities_15', preserveNullAndEmptyArrays: false }}
+format = { $project : { _id: { $concat: [{ $replaceAll: { input: "$cities_15.country", find: "/", replacement: "%2F" } },':',{ $replaceAll: { input: "$cities_15.admin_name", find: "/", replacement: "%2F" } },':',{ $replaceAll: { input: "$cities_15.city", find: "/", replacement: "%2F" } }]}, position:["$cities_15.lng","$cities_15.lat"] , country: "$cities_15.country" }}
+newcollection = { $out : "cities" }
+db.worldcities.aggregate([minsize,sortbysize,percountry15,percountry15Project,unwind,format, newcollection])
+
+
+//Create 2d shpere index for position in cities
+db.cities.createIndex( { position: "2dsphere" } )
+
+//Create index for cargo location
+db.cargo.createIndex( { location: 1 } )
